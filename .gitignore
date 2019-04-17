@@ -1,3 +1,6 @@
 venv/
 *.pyc
 *.idea/
+experimentOn/
+data/data.json
+data/dataCluster.json
