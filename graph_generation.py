@@ -25,6 +25,42 @@ def _converter(content="default"):
         raise Exception("Invalid converter content")
 
 
+def create_test_graph():
+    G = nx.DiGraph()
+    G.add_node("A")
+    G.add_node("B")
+    G.add_node("C")
+    G.add_node("D")
+    G.add_node("E")
+    G.add_node("F")
+    G.add_node("G")
+    G.add_node("H")
+    G.add_node("I")
+    G.add_node("J")
+    G.add_node("K")
+    G.add_edge("A", "B")
+    G.add_edge("B", "C")
+    G.add_edge("C", "D")
+    G.add_edge("D", "E")
+    G.add_edge("E", "F")
+    G.add_edge("F", "G")
+    G.add_edge("G", "H")
+    G.add_edge("H", "I")
+    G.add_edge("I", "J")
+    G.add_edge("J", "K")
+    G.add_edge("A", "D")
+    G.add_edge("B", "D")
+    G.add_edge("B", "E")
+    G.add_edge("E", "G")
+    G.add_edge("G", "J")
+    G.add_edge("G", "I")
+    G.add_edge("H", "J")
+    G.add_edge("I", "K")
+
+    modules = {"module1": ["A", "B", "C", "D", "E", "F", "G"], "module2": ["H", "I", "J", "K"]} # G should be in module2
+    return G, modules
+
+
 def create_pyan_graph(path, keep_undefined=False, content="default"):
     converter = _converter(content)
     
@@ -39,14 +75,30 @@ def create_pyan_graph(path, keep_undefined=False, content="default"):
     for node in visited_nodes:
         if (node.flavor == Flavor.MODULE or node.flavor == Flavor.CLASS) and node in visitor.defines_edges:
             modules[node] = [cdefined for defined in visitor.defines_edges[node] if defined.defined or keep_undefined for cdefined in converter(defined)]+[cnode for cnode in converter(node)]
-        if node in visitor.uses_edges:
-            for cnode in converter(node):
-                G.add_node(cnode)
-            for called in visitor.uses_edges[node]:
-                if (called.defined or keep_undefined) and (called.flavor == Flavor.FUNCTION or called.flavor == Flavor.CLASSMETHOD or called.flavor == Flavor.METHOD):
+            for called in visitor.defines_edges[node]:
+                if called.defined or keep_undefined:
                     for cnode in converter(node):
                         for ccalled in converter(called):
+                            G.add_node(cnode)
+                            G.add_node(ccalled)
                             G.add_edge(cnode, ccalled)
+        if node in visitor.uses_edges:
+            for called in visitor.uses_edges[node]:
+                if called.defined or keep_undefined:
+                    for cnode in converter(node):
+                        for ccalled in converter(called):
+                            G.add_node(cnode)
+                            G.add_node(ccalled)
+                            G.add_edge(cnode, ccalled)
+    """
+    for node in modules.keys():
+        for cnode in converter(node):
+            G.add_node(cnode)
+        for called in modules[node]:
+            if G.has_node(called):
+                for cnode in converter(node):
+                    G.add_edge(cnode, called)
+                    """
     return G, modules
 
 
