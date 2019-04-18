@@ -1,13 +1,15 @@
+import networkx as nx
 
-def _params2conductance(nom, external_links, internal_links):
-    if nom>internal_links/2:
-        external_links = internal_links - external_links
-    if external_links==0 or nom==0:
+
+def _params2conductance(external_links: int, internal_links: int, graph_links: int) -> float:
+    if internal_links > graph_links/2:
+        internal_links = graph_links - internal_links
+    if internal_links == 0 or external_links == 0:
         return float('inf')
-    return nom / external_links
+    return external_links / internal_links
 
 
-def conductance(ranks, g):
+def conductance(ranks: dict, g: nx.Graph) -> float:
     external_links = 0
     internal_links = 0
     for i, j in g.edges():
@@ -16,7 +18,7 @@ def conductance(ranks, g):
     return _params2conductance(external_links, internal_links, g.number_of_edges())
 
 
-def sweep(ranks, g):
+def sweep(ranks: dict, g: nx.DiGraph) -> (float, set):
     best_conductance = float('inf')
     external_links = 0
     internal_links = 0
@@ -33,5 +35,6 @@ def sweep(ranks, g):
         curr_cond = _params2conductance(external_links, internal_links, g.number_of_edges())
         if curr_cond<best_conductance:
             best_conductance = curr_cond
-            best_set = set(prev)
-    return best_conductance, best_set
+            best_set = prev.copy()
+    # print("Minimum conductance", best_conductance)
+    return best_set
