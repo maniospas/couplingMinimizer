@@ -26,7 +26,7 @@ print(modules[module_name])
 #best_set = conductance.sweep(ranks[module_name])
 print("Original conductance",conductance.conductance(ranker.to_seed(modules[module_name])))
 print("New conductance", conductance.conductance(ranker.to_seed(new_modules[module_name])))
-vis.visualize(G, ranker.to_seed(new_modules[module_name]), ranker.to_seed(modules[module_name]))
+vis.visualize(G, ranker.to_seed(modules[module_name]), ranker.to_seed(new_modules[module_name]))
 
 
 """
