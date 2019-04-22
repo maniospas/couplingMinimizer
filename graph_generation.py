@@ -1,4 +1,6 @@
 import networkx as nx
+from pyan.analyzer import Flavor
+from pyan.analyzer import CallGraphVisitor
 
 
 def _path2files(path):
@@ -61,11 +63,13 @@ def create_test_graph():
     return G, modules
 
 
+def _is_of_interest(node):
+    return not node.flavor==Flavor.CLASS and not node.flavor==Flavor.MODULE
+
+
 def create_pyan_graph(path, keep_undefined=False, content="default"):
     converter = _converter(content)
-    
-    from pyan.analyzer import CallGraphVisitor
-    from pyan.analyzer import Flavor
+
     visitor = CallGraphVisitor(_path2files(path))
     visited_nodes = [node for name in visitor.nodes for node in visitor.nodes[name] if node.defined or keep_undefined]
     #visited_nodes.sort(key=lambda x: (x.namespace, x.name))
@@ -73,8 +77,8 @@ def create_pyan_graph(path, keep_undefined=False, content="default"):
     G = nx.DiGraph()
     modules = {}
     for node in visited_nodes:
-        if (node.flavor == Flavor.MODULE or node.flavor == Flavor.CLASS) and node in visitor.defines_edges:
-            modules[node] = [cdefined for defined in visitor.defines_edges[node] if defined.defined or keep_undefined for cdefined in converter(defined)]+[cnode for cnode in converter(node)]
+        """
+        if node in visitor.defines_edges:
             for called in visitor.defines_edges[node]:
                 if called.defined or keep_undefined:
                     for cnode in converter(node):
@@ -82,14 +86,27 @@ def create_pyan_graph(path, keep_undefined=False, content="default"):
                             G.add_node(cnode)
                             G.add_node(ccalled)
                             G.add_edge(cnode, ccalled)
-        if node in visitor.uses_edges:
+                            """
+        if node in visitor.uses_edges and _is_of_interest(node):
             for called in visitor.uses_edges[node]:
-                if called.defined or keep_undefined:
+                if (called.defined or keep_undefined) and _is_of_interest(node):
                     for cnode in converter(node):
                         for ccalled in converter(called):
                             G.add_node(cnode)
                             G.add_node(ccalled)
                             G.add_edge(cnode, ccalled)
+
+    modules = {}
+    for node in visited_nodes:
+        module_name = node.get_namespace_label()
+        G.add_node(module_name)
+        if _is_of_interest(node) and module_name is not None and module_name!='':
+            for ccalled in converter(node):
+                G.add_node(ccalled)
+                if module_name not in modules:
+                    modules[module_name] = [module_name]
+                modules[module_name].append(ccalled)
+                G.add_edge(module_name, ccalled)
     """
     for node in modules.keys():
         for cnode in converter(node):

@@ -4,14 +4,13 @@ import graph_generation
 import module_ranker
 
 # load graph
-G, modules = graph_generation.create_test_graph()
-#G, modules = graph_generation.create_pyan_graph("./experimentOn/TheAlgorithms2-master")
-#G, modules = graph_generation.create_pyan_graph("C:\\Users\\manios\\Documents\\eclipse\\Python - CommunityDetection")
-
+#G, modules = graph_generation.create_test_graph()
+# G, modules = graph_generation.create_pyan_graph("./experimentOn/TheAlgorithms2-master")
+G, modules = graph_generation.create_pyan_graph("C:\\Users\\manios\\Documents\\eclipse\\Python - CommunityDetection")
 G = G.to_undirected()
 conductance = graph_utils.Conductance(G)
 ranker = module_ranker.Ranker(G)
-ranks = {module_name: ranker.rank(module, normalize=False) for module_name, module in modules.items()}
+ranks = {module_name: ranker.rank(module) for module_name, module in modules.items()}
 print(ranks)
 
 print("Original avg. conductance", sum(conductance.conductance(ranker.to_seed(module)) for module in modules.values())/len(modules))
@@ -22,7 +21,7 @@ print("New avg. conductance", sum(conductance.conductance(ranker.to_seed(module)
 
 print("----- Test Module -----")
 module_name = list(modules.keys())[1]
-print(modules[module_name])
+print(module_name,':',modules[module_name])
 #best_set = conductance.sweep(ranks[module_name])
 print("Original conductance",conductance.conductance(ranker.to_seed(modules[module_name])))
 print("New conductance", conductance.conductance(ranker.to_seed(new_modules[module_name])))
